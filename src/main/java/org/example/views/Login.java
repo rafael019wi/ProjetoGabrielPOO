@@ -75,7 +75,6 @@ public class Login extends Application {
         Scene cena = new Scene(vbox, 500, 300);
 
         stage.setTitle("StockMaster Fx");
-        stage.setResizable(false);
         stage.setScene(cena);
         stage.show();
     }

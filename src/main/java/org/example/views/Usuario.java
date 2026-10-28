@@ -34,7 +34,7 @@ public class Usuario extends Application {
         VBox.setVgrow(spacer, Priority.ALWAYS);
         Button btnSair = new Button("Sair da Conta");
         btnSair.setOnAction(event -> stage.close());
-        
+
         menuLateral.getChildren().addAll(lbBoasVindas, hlVisaoGeral, hlCategorias, hlProdutos, hlUsuarios, spacer, btnSair);
         root.setLeft(menuLateral);
 
