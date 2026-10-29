@@ -56,7 +56,7 @@ public class Login extends Application {
                 "-fx-background-color: #2F1CD8;" + // Roxo azulado do botão
                         "-fx-text-fill: white;" +
                         "-fx-font-size: 14px;" +
-                        "-fx-background-radius: 0;" // Remove as bordas arredondadas padrão do JavaFX
+                        "-fx-background-radius: 0;"
         );
         Label labelMensagem = new Label();
         labelMensagem.setStyle("-fx-text-fill: red;");
