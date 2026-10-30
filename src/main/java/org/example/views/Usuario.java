@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.stage.Modality;
 import javafx.util.Callback;
 
 public class Usuario extends Application {
@@ -46,7 +47,7 @@ public class Usuario extends Application {
         Label lbTitulo = new Label("Gestão de usuários");
         lbTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
 
-        //CONFIGURAÇÃO DA TABELA
+        //CONFIGURAÇÃO TABELA
         TableView<UsuarioData> tabela = new TableView<>();
 
         TableColumn<UsuarioData, String> colId = new TableColumn<>("Id");
@@ -90,15 +91,14 @@ public class Usuario extends Application {
 
                         // Ação do botão Editar
                         btnEditar.setOnAction(event -> {
-                            UsuarioData usuario = getTableView().getItems().get(getIndex());
-                            System.out.println("Editar o usuário: " + usuario.getNome());
+                            UsuarioData usuarioSelecionado = getTableView().getItems().get(getIndex());
+                            abrirJanelaEdicao(stage, usuarioSelecionado, getTableView());
                             // Aqui você chama a sua lógica ou tela de edição passando o objeto 'usuario'
                         });
 
                         // Ação do botão Apagar
                         btnApagar.setOnAction(event -> {
                             UsuarioData usuario = getTableView().getItems().get(getIndex());
-                            System.out.println("Apagar o usuário: " + usuario.getNome());
                             // Exemplo de remoção direta da lista da tabela
                             getTableView().getItems().remove(usuario);
                         });
@@ -137,15 +137,86 @@ public class Usuario extends Application {
         stage.setTitle("Painel Administrativo");
         stage.show();
     }
+    private void abrirJanelaEdicao(Stage dono, UsuarioData usuario, TableView<UsuarioData> tabela) {
+        Stage janelaEditar = new Stage();
+        janelaEditar.setTitle("Editar Usuário");
+        janelaEditar.initModality(Modality.WINDOW_MODAL); // Bloqueia a janela de trás enquanto aberta
+        janelaEditar.initOwner(dono);
+
+        VBox layoutForm = new VBox(10);
+        layoutForm.setPadding(new Insets(20));
+        layoutForm.setStyle("-fx-background-color: #F4F4F4;");
+
+        // 🔒 CAMPOS BLOQUEADOS (Não editáveis - setEditable(false))
+        TextField txtId = new TextField(usuario.getId());
+        txtId.setEditable(false);
+        txtId.setStyle("-fx-background-color: #E0E0E0;"); // Visual cinza indicando bloqueio
+
+        TextField txtCriadoEm = new TextField(usuario.getCriadoEm());
+        txtCriadoEm.setEditable(false);
+        txtCriadoEm.setStyle("-fx-background-color: #E0E0E0;");
+
+        TextField txtCriadoPor = new TextField(usuario.getCriadoPor());
+        txtCriadoPor.setEditable(false);
+        txtCriadoPor.setStyle("-fx-background-color: #E0E0E0;");
+
+        // 🔓 CAMPOS LIBERADOS PARA EDIÇÃO
+        TextField txtNome = new TextField(usuario.getNome());
+        TextField txtEmail = new TextField(usuario.getEmail());
+        TextField txtTelefone = new TextField(usuario.getTelefone());
+
+        ComboBox<String> cbStatus = new ComboBox<>();
+        cbStatus.getItems().addAll("Ativo", "Inativo"); // Adiciona as duas opções na caixinha
+        cbStatus.setMaxWidth(Double.MAX_VALUE);         // Faz a caixinha ocupar toda a largura disponível
+
+        cbStatus.setValue(usuario.getStatus());
+
+        // BOTÕES DO FORMULÁRIO
+        Button btnSalvar = new Button("Salvar Alterações");
+        Button btnCancelar = new Button("Cancelar");
+
+        HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
+        containerBotoes.setAlignment(Pos.CENTER_RIGHT);
+
+        // Ação do botão salvar (Modifica o objeto e atualiza o componente visual)
+        btnSalvar.setOnAction(e -> {
+            usuario.setNome(txtNome.getText());
+            usuario.setEmail(txtEmail.getText());
+            usuario.setTelefone(txtTelefone.getText());
+
+            usuario.setStatus(cbStatus.getValue());
+
+            tabela.refresh(); // Diz para a tabela redesenhar as linhas com os novos dados
+            janelaEditar.close();
+        });
+
+        btnCancelar.setOnAction(e -> janelaEditar.close());
+
+        // Adiciona tudo na tela verticalmente organizando com Labels descritivos
+        layoutForm.getChildren().addAll(
+                new Label("ID (Bloqueado):"), txtId,
+                new Label("Criado Em (Bloqueado):"), txtCriadoEm,
+                new Label("Criado Por (Bloqueado):"), txtCriadoPor,
+                new Label("Nome Completo:"), txtNome,
+                new Label("Status:"), cbStatus,
+                new Label("E-mail:"), txtEmail,
+                new Label("Telefone:"), txtTelefone,
+                containerBotoes
+        );
+        Scene cenaEdicao = new Scene(layoutForm, 400, 550);
+        janelaEditar.setScene(cenaEdicao);
+        janelaEditar.setResizable(false);
+        janelaEditar.showAndWait();
+    }
 
     // Classe de modelo interna
     public static class UsuarioData {
         private final String id;
-        private final String nome;
-        private final String status;
+        private String nome;
+        private String status;
         private final String criadoEm;
-        private final String email;
-        private final String telefone;
+        private String email;
+        private String telefone;
         private final String criadoPor;
 
         public UsuarioData(String id, String nome, String status, String criadoEm,String criadoPor, String email, String telefone) {
@@ -165,6 +236,12 @@ public class Usuario extends Application {
         public String getEmail() { return email; }
         public String getTelefone() { return telefone; }
         public String getCriadoPor() { return criadoPor; }
+
+        public void setNome(String nome) { this.nome = nome; }
+        public void setStatus(String status) { this.status = status; }
+        public void setEmail(String email) { this.email = email; }
+        public void setTelefone(String telefone) { this.telefone = telefone; }
+
     }
 
     public static void main(String[] args) {
