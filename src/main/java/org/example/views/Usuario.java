@@ -16,29 +16,6 @@ public class Usuario extends Application {
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
 
-        // MENU LATERAL
-        VBox menuLateral = new VBox(20);
-        menuLateral.setPadding(new Insets(30, 20, 30, 20));
-        menuLateral.setStyle("-fx-background-color: #E0E0E0;");
-
-        Label lbBoasVindas = new Label("Bem-vindo à página administrativa");
-        lbBoasVindas.setStyle("-fx-font-weight: bold; -fx-wrap-text: true;");
-
-        Hyperlink hlVisaoGeral = new Hyperlink("Visão Geral");
-        Hyperlink hlCategorias = new Hyperlink("Gestão de categorias");
-        Hyperlink hlProdutos = new Hyperlink("Gestão de produtos");
-
-        Hyperlink hlUsuarios = new Hyperlink("Gestão de usuários");
-        hlUsuarios.setStyle("-fx-font-weight: bold; -fx-underline: true;");
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-        Button btnSair = new Button("Sair da Conta");
-        btnSair.setOnAction(event -> stage.close());
-
-        menuLateral.getChildren().addAll(lbBoasVindas, hlVisaoGeral, hlCategorias, hlProdutos, hlUsuarios, spacer, btnSair);
-        root.setLeft(menuLateral);
-
         // ÁREA CENTRAL
         VBox conteudoCentral = new VBox(20);
         conteudoCentral.setPadding(new Insets(40));
