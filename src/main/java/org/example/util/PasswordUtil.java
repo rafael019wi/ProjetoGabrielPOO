@@ -19,15 +19,15 @@ public class PasswordUtil {
     // cria um objeto que sabe converter bytes para texto hexadecimal e vice-versa
     private static final HexFormat HEX = HexFormat.of();
 
-    public static String criarHash(String senha) {
+    public static String createHash(String password) {
         // o salt é um valor aleatório único por senha. Ele garante que duas pessoas com a mesma senha tenham hashes diferentes
-        byte[] salt = gerarSalt();
-        byte[] hash = calcularHash(senha, salt);
+        byte[] salt = generateSalt();
+        byte[] hash = calculateHash(password, salt);
 
         return PREFIXO + "$" + ITERACOES + "$" + HEX.formatHex(salt) + "$" + HEX.formatHex(hash);
     }
 
-    public static boolean verificarHash (String password, String passwordDB) {
+    public static boolean checkHash (String password, String passwordDB) {
         if (password == null || passwordDB == null) {
             return false;
         }
@@ -35,7 +35,7 @@ public class PasswordUtil {
         try {
             String[] partes = passwordDB.split("\\$");
 
-            if (!formatoValido(partes)) {
+            if (!validFormat(partes)) {
                 return false;
             }
 
@@ -46,7 +46,7 @@ public class PasswordUtil {
                 return false;
             }
 
-            byte[] hashCalculado = calcularHash(password, salt);
+            byte[] hashCalculado = calculateHash(password, salt);
 
             // compara as duas hashes
             return MessageDigest.isEqual(hashSalvo, hashCalculado);
@@ -56,19 +56,19 @@ public class PasswordUtil {
         }
     }
 
-    private static boolean formatoValido(String[] partes) {
-        return partes.length == 4 && partes[0].equals(PREFIXO) && partes[1].equals(String.valueOf(ITERACOES));
+    private static boolean validFormat(String[] parts) {
+        return parts.length == 4 && parts[0].equals(PREFIXO) && parts[1].equals(String.valueOf(ITERACOES));
     }
 
-    private static byte[] gerarSalt() {
+    private static byte[] generateSalt() {
         byte[] salt = new byte[TAMANHO_SALT];
         new SecureRandom().nextBytes(salt); // aleatório criptograficamente seguro
         return salt;
     }
 
-    private static byte[] calcularHash(String senha, byte[] salt) {
+    private static byte[] calculateHash(String password, byte[] salt) {
         int tamanhoEmBits = TAMANHO_HASH * 8;
-        PBEKeySpec spec = new PBEKeySpec(senha.toCharArray(), salt, ITERACOES, tamanhoEmBits);
+        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERACOES, tamanhoEmBits);
 
         try {
             return SecretKeyFactory.getInstance(ALGORITMO).generateSecret(spec).getEncoded();

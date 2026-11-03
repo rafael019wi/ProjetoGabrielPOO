@@ -2,7 +2,7 @@ package org.example.entity;
 import java.time.LocalDateTime;
 
 public class User {
-    private int id;
+    private Integer id;
     private String name;
     private String email;
     private String phone;
@@ -10,6 +10,14 @@ public class User {
     private LocalDateTime createdAt;
 
     public User() {}
+
+    public User(int id, String name, String email, String phone, String status) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.status = status;
+    }
 
     public User(int id, String name, String email, String phone, String status, LocalDateTime createdAt) {
         this.id = id;
