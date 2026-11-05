@@ -63,8 +63,10 @@ public class Produto {
             private final Button btnEditar = new Button("✏️");
             private final Button btnExcluir = new Button("🗑️");
             {
-                btnEditar.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
-                btnExcluir.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 14px;");
+                btnEditar.setStyle("-fx-background-color: transparent; -fx-cursor: hand;" +
+                        " -fx-font-size: 14px;");
+                btnExcluir.setStyle("-fx-background-color: transparent; -fx-cursor: hand;" +
+                        " -fx-font-size: 14px;");
             }
             private final HBox containerBotoes = new HBox(10, btnEditar, btnExcluir);
             {
