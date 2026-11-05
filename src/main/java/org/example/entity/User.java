@@ -11,7 +11,7 @@ public class User {
 
     public User() {}
 
-    public User(int id, String name, String email, String phone, String status) {
+    public User(Integer id, String name, String email, String phone, String status) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -19,7 +19,7 @@ public class User {
         this.status = status;
     }
 
-    public User(int id, String name, String email, String phone, String status, LocalDateTime createdAt) {
+    public User(Integer id, String name, String email, String phone, String status, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
