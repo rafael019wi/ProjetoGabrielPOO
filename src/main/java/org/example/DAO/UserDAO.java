@@ -19,14 +19,17 @@ public class UserDAO {
         }
 
         if (!UserUtil.validarPasswords(password, confirmPassword)) {
-            System.out.println("As senhas são diferentes.");
             return new Result<>(false, 400, "As senhas são diferentes.", null);
         }
 
 
         String insertQuery = "INSERT INTO `user` (user_name, user_email, user_phone, user_password, user_status, created_at) VALUES (?, ?, ?, ?, ?, ?)";
 
-        Connection conn = Connect.getConnection();
+
+        Connection conn = Connect.getConnection(); // Faz a chamada de conexão com o banco de dados
+
+        // O PreparedStatement é uma forma de executar comandos SQL no Java usando ? no lugar dos valores
+        // Evita SQL Injection, converte os tipos sozinho, o banco reaproveita a consulta quando ela roda várias vezes
         try (PreparedStatement ps = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
             String hashPassword = PasswordUtil.createHash(password);
             LocalDateTime createdAt = LocalDateTime.now();
@@ -57,7 +60,6 @@ public class UserDAO {
                 return new Result<>(false, 409, "E-mail já cadastrado.", null);
             }
             e.printStackTrace();
-            System.out.println("Erro ao cadastrar usuário");
             return new Result<>(false, 500, "Erro ao cadastrar usuário", null);
         }
     }
@@ -75,19 +77,16 @@ public class UserDAO {
             // executeQuery serve para realizar SELECT. Ele retorna ResultSet que é um objeto java com os atributos desejados na query
             try (ResultSet result = ps.executeQuery()) {
                 if (!result.next()) {
-                    System.out.println("Usuário não encontrado.");
                     return new Result<>(false, 401 ,"Entre com e-mail e senha corretos.", null);
                 }
 
                 String user_status = result.getString("user_status");
                 if (!UserUtil.validarStatus(user_status)) {
-                    System.out.println("Usuário bloqueado.");
                     return new Result<>(false, 403, "Entre com e-mail e senha corretos.", null);
                 }
 
                 String user_password = result.getString("user_password");
                 if (!PasswordUtil.checkHash(password, user_password)) {
-                    System.out.println("Senha invalida.");
                     return new Result<>(false, 401, "Entre com e-mail e senha corretos.", null);
                 }
 
@@ -101,36 +100,7 @@ public class UserDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Erro ao fazer login.");
             return new Result<>(false, 500, "Erro ao fazer login.", null);
-        }
-    }
-
-    public Result<Void> deleteUser(Integer idUser) {
-        if (idUser == null || idUser <= 0) {
-            return new Result<>(false, 400, "ID de usuário inválido.", null);
-        }
-
-        String deleteQuery = "DELETE FROM `user` WHERE id_user = ?";
-
-        Connection conn = Connect.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement(deleteQuery)) {
-            ps.setInt(1, idUser);
-
-            int rowsAffected = ps.executeUpdate();
-
-            if (rowsAffected == 0) {
-                return new Result<>(false, 404, "Usuário não encontrado.", null);
-            }
-
-            return new Result<>(true, 200, "Usuário deletado com sucesso.", null);
-        } catch (SQLException e) {
-            if (e.getErrorCode() == 1451) {
-                return new Result<>(false, 409, "Usuário possui registros vinculados e não pode ser deletado.", null);
-            }
-            e.printStackTrace();
-            System.out.println("Erro ao deletar usuário.");
-            return new Result<>(false, 500, "Erro ao deletar usuário.", null);
         }
     }
 
@@ -170,7 +140,6 @@ public class UserDAO {
                 return new Result<>(false, 409, "E-mail já cadastrado.", null);
             }
             e.printStackTrace();
-            System.out.println("Erro ao editar usuário.");
             return new Result<>(false, 500, "Erro ao editar usuário.", null);
         }
     }
@@ -181,7 +150,6 @@ public class UserDAO {
         }
 
         if (!UserUtil.validarPasswords(newPassword, confirmNewPassword)) {
-            System.out.println("As senhas são diferentes.");
             return new Result<>(false, 400, "As senhas são diferentes.", null);
         }
 
@@ -194,18 +162,15 @@ public class UserDAO {
 
             try (ResultSet result = psSelect.executeQuery()) {
                 if (!result.next()) {
-                    System.out.println("Usuário não encontrado.");
                     return new Result<>(false, 404, "Usuário não encontrado.", null);
                 }
 
                 String currentUserPassword = result.getString("user_password");
                 if (!PasswordUtil.checkHash(oldPassword, currentUserPassword)) {
-                    System.out.println("A senha atual está incorreta.");
                     return new Result<>(false, 401, "A senha atual está incorreta.", null);
                 }
 
                 if (PasswordUtil.checkHash(newPassword, currentUserPassword)) {
-                    System.out.println("A nova senha deve ser diferente da senha atual.");
                     return new Result<>(false, 400, "A nova senha deve ser diferente da senha atual.", null);
                 }
 
@@ -233,8 +198,35 @@ public class UserDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Erro ao alterar senha.");
             return new Result<>(false, 500, "Erro ao alterar senha.", null);
+        }
+    }
+
+    public Result<Void> deleteUser(Integer idUser) {
+        if (idUser == null || idUser <= 0) {
+            return new Result<>(false, 400, "ID de usuário inválido.", null);
+        }
+
+        String deleteQuery = "DELETE FROM `user` WHERE id_user = ?";
+
+        Connection conn = Connect.getConnection();
+        try (PreparedStatement ps = conn.prepareStatement(deleteQuery)) {
+            ps.setInt(1, idUser);
+
+            int rowsAffected = ps.executeUpdate();
+
+            if (rowsAffected == 0) {
+                return new Result<>(false, 404, "Usuário não encontrado.", null);
+            }
+
+            return new Result<>(true, 200, "Usuário deletado com sucesso.", null);
+
+        } catch (SQLException e) {
+            if (e.getErrorCode() == 1451) {
+                return new Result<>(false, 409, "Usuário possui registros vinculados e não pode ser deletado.", null);
+            }
+            e.printStackTrace();
+            return new Result<>(false, 500, "Erro ao deletar usuário.", null);
         }
     }
 
@@ -268,7 +260,6 @@ public class UserDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Erro ao listar usuários.");
             return new Result<>(false, 500, "Erro ao listar usuários.", null);
         }
     }
