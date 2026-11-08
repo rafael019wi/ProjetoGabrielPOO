@@ -38,6 +38,8 @@ public class CategoryDAO {
             Category category = new Category(idCategory, createdBy, name, createdAt);
             return new Result<>(true, 201, "Categoria cadastrada com sucesso.", category);
 
+        } catch (SQLIntegrityConstraintViolationException e) {
+            return new Result<>(false, 404, "Usuário não encontrado.", null);
         } catch (SQLException e) {
             if (e.getErrorCode() == 1062) {
                 return new Result<>(false, 409, "Nome de categoria já cadastrada.", null);
@@ -74,6 +76,8 @@ public class CategoryDAO {
             Category category = new Category(idCategory, createdBy, name);
             return new Result<>(true, 200, "Categoria atualizada com sucesso.", category);
 
+        } catch (SQLIntegrityConstraintViolationException e) {
+            return new Result<>(false, 404, "Usuário não encontrado.", null);
         } catch (SQLException e) {
             if (e.getErrorCode() == 1062) {
                 return new Result<>(false, 409, "Nome de categoria já cadastrada.", null);
@@ -114,11 +118,14 @@ public class CategoryDAO {
     public Result<List<Category>> getAllCategories() {
         String selectQuery = """
         SELECT
-            id_category,
-            fk_created_by,
-            category_name,
-            created_at
-        FROM `categories`
+            c.id_category,
+            c.category_name,
+            c.fk_created_by,
+            u.user_name AS creator_name,
+            c.created_at
+        FROM `categories` AS c
+        LEFT JOIN `user` AS u
+            ON c.fk_created_by = u.id_user
         ORDER BY id_category DESC
         """;
 
@@ -130,6 +137,7 @@ public class CategoryDAO {
                     categories.add(new Category(
                             result.getInt("id_category"),
                             result.getInt("fk_created_by"),
+                            result.getString("creator_name"),
                             result.getString("category_name"),
                             result.getTimestamp("created_at").toLocalDateTime()
                     ));

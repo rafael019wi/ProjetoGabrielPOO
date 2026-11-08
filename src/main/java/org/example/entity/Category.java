@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class Category {
     private Integer id;
     private Integer createdBy;
+    private String creatorName;
     private String name;
     private LocalDateTime createdAt;
 
@@ -17,6 +18,14 @@ public class Category {
     public Category(Integer id, Integer createdBy, String name, LocalDateTime createdAt) {
         this.id = id;
         this.createdBy = createdBy;
+        this.name = name;
+        this.createdAt= createdAt;
+    }
+
+    public Category(Integer id, Integer createdBy, String creatorName, String name, LocalDateTime createdAt) {
+        this.id = id;
+        this.createdBy = createdBy;
+        this.creatorName = creatorName;
         this.name = name;
         this.createdAt= createdAt;
     }
