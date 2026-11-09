@@ -11,18 +11,18 @@ import java.util.List;
 
 public class CategoryDAO {
     public Result<Category> createCategory(Integer createdBy, String name) {
-        if (createdBy == null || createdBy <= 0 || name == null) {
+        if (createdBy == null || createdBy <= 0 || name == null || name.isBlank()) {
             return new Result<>(false, 400, "Todos os campos são obrigatórios.", null);
         }
 
-        String insertQuery = "INSERT INTO `categories` (createdBy, name, created_at) VALUES (?, ?, ?)";
+        String insertQuery = "INSERT INTO `categories` (fk_created_by, category_name, created_at) VALUES (?, ?, ?)";
 
         Connection conn = Connect.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement(insertQuery)) {
+        try (PreparedStatement ps = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
             LocalDateTime createdAt = LocalDateTime.now();
 
             ps.setInt(1, createdBy);
-            ps.setString(2, name);
+            ps.setString(2, name.strip());
             ps.setTimestamp(3, Timestamp.valueOf(createdAt));
 
             ps.executeUpdate();
@@ -35,37 +35,32 @@ public class CategoryDAO {
                 }
             }
 
-            Category category = new Category(idCategory, createdBy, name, createdAt);
+            Category category = new Category(idCategory, createdBy, name.strip(), createdAt);
             return new Result<>(true, 201, "Categoria cadastrada com sucesso.", category);
 
-        } catch (SQLIntegrityConstraintViolationException e) {
-            return new Result<>(false, 404, "Usuário não encontrado.", null);
         } catch (SQLException e) {
             if (e.getErrorCode() == 1062) {
                 return new Result<>(false, 409, "Nome de categoria já cadastrada.", null);
+            }
+            if (e.getErrorCode() == 1452) {
+                return new Result<>(false, 404, "Usuário não encontrado.", null);
             }
             e.printStackTrace();
             return new Result<>(false, 500, "Erro ao cadastrar categoria.", null);
         }
     }
 
-    public Result<Category> updateCategory(Integer idCategory, Integer createdBy, String name) {
-        if (idCategory == null || idCategory <= 0 || createdBy == null || createdBy <= 0 || name == null) {
+    public Result<Category> updateCategory(Integer idCategory, String name) {
+        if (idCategory == null || idCategory <= 0 || name == null || name.isBlank()) {
             return new Result<>(false, 400, "Todos os campos são obrigatórios.", null);
         }
 
-        String updateQuery = """
-        UPDATE `categories` SET
-            name = ?,
-            createdBy = ?
-        WHERE id_category = ?
-        """;
+        String updateQuery = "UPDATE `categories` SET category_name = ? WHERE id_category = ?";
 
         Connection conn = Connect.getConnection();
         try (PreparedStatement ps = conn.prepareStatement(updateQuery)) {
-            ps.setString(1, name);
-            ps.setInt(2, createdBy);
-            ps.setInt(3, idCategory);
+            ps.setString(1, name.strip());
+            ps.setInt(2, idCategory);
 
             int rowsAffected = ps.executeUpdate();
 
@@ -73,11 +68,9 @@ public class CategoryDAO {
                 return new Result<>(false, 404, "Categoria não encontrada.", null);
             }
 
-            Category category = new Category(idCategory, createdBy, name);
+            Category category = new Category(idCategory, null, name.strip());
             return new Result<>(true, 200, "Categoria atualizada com sucesso.", category);
 
-        } catch (SQLIntegrityConstraintViolationException e) {
-            return new Result<>(false, 404, "Usuário não encontrado.", null);
         } catch (SQLException e) {
             if (e.getErrorCode() == 1062) {
                 return new Result<>(false, 409, "Nome de categoria já cadastrada.", null);
@@ -92,7 +85,7 @@ public class CategoryDAO {
             return new Result<>(false, 400, "Todos os campos são obrigatórios.", null);
         }
 
-        String deleteQuery = "DELETE FROM `categories` WHERE idCategory = ?";
+        String deleteQuery = "DELETE FROM `categories` WHERE id_category = ?";
 
         Connection conn = Connect.getConnection();
         try (PreparedStatement ps = conn.prepareStatement(deleteQuery)) {
@@ -108,7 +101,7 @@ public class CategoryDAO {
 
         } catch (SQLException e) {
             if (e.getErrorCode() == 1451) {
-                return new Result<>(false, 409, "Categoria possui registros vinculados e não pode ser deletado.", null);
+                return new Result<>(false, 409, "Categoria possui registros vinculados e não pode ser deletada.", null);
             }
             e.printStackTrace();
             return new Result<>(false, 500, "Erro ao deletar categoria.", null);
@@ -126,12 +119,12 @@ public class CategoryDAO {
         FROM `categories` AS c
         LEFT JOIN `user` AS u
             ON c.fk_created_by = u.id_user
-        ORDER BY id_category DESC
+        ORDER BY c.id_category DESC
         """;
 
         Connection conn = Connect.getConnection();
         try (PreparedStatement ps = conn.prepareStatement(selectQuery)) {
-            try (ResultSet result = ps.executeQuery()){
+            try (ResultSet result = ps.executeQuery()) {
                 List<Category> categories = new ArrayList<>();
                 while (result.next()) {
                     categories.add(new Category(
