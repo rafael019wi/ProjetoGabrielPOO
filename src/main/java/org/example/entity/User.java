@@ -2,13 +2,31 @@ package org.example.entity;
 import java.time.LocalDateTime;
 
 public class User {
-    private int id;
+    private Integer id;
     private String name;
     private String email;
     private String phone;
-    private String password;
     private String status;
     private LocalDateTime createdAt;
+
+    public User() {}
+
+    public User(Integer id, String name, String email, String phone, String status) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.status = status;
+    }
+
+    public User(Integer id, String name, String email, String phone, String status, LocalDateTime createdAt) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.status = status;
+        this.createdAt = createdAt;
+    }
 
     public int getId() {
         return id;
@@ -40,14 +58,6 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getStatus() {
