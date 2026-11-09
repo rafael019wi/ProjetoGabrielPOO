@@ -39,5 +39,7 @@ public class MenuLateral {
             root.setLeft(menuLateral);
         }
         return menuLateral;
+
     }
+
 }

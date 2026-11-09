@@ -21,6 +21,11 @@ public class Usuario extends Application {
         conteudoCentral.setPadding(new Insets(40));
         conteudoCentral.setAlignment(Pos.TOP_LEFT);
 
+        MenuLateral construtorMenu = new MenuLateral();
+        VBox menuInstanciado = construtorMenu.criarMenuLateral(root, stage);
+
+        root.setLeft(menuInstanciado);
+
         Label lbTitulo = new Label("Gestão de usuários");
         lbTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
 
