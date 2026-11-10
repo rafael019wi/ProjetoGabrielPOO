@@ -46,5 +46,5 @@ CREATE TABLE `products` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO `user` (id_user, user_name, user_email, user_phone, user_password, user_status, created_at) VALUES (
-    1, 'Manager', 'teste@gmail.com'  , '19972735318', 'RgcNS/k0+w1LBtnixG40aUTjIkRJAKQ119mpXm10NfU=', 'active', NOW()
+    1, 'Manager', 'teste@gmail.com'  , '19972735318', 'pbkdf2-sha256$600000$95b0978d969d65a8b24bfd5d07d91332$c6ba2ca1049ce734829a4e55202ca05190acc074ba7962d2365cc144b4ea2db7', 'active', NOW()
 );
