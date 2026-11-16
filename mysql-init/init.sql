@@ -25,7 +25,7 @@ CREATE TABLE `user` (
 CREATE TABLE `categories` (
     `id_category` INT AUTO_INCREMENT PRIMARY KEY,
     `fk_created_by` INT NOT NULL,
-    `category_name` VARCHAR(255) NOT NULL,
+    `category_name` VARCHAR(255) UNIQUE NOT NULL,
     `created_at` DATETIME NOT NULL,
     FOREIGN KEY (`fk_created_by`) REFERENCES `user`(`id_user`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -41,7 +41,7 @@ CREATE TABLE `products` (
     `stock` INT NOT NULL CHECK (`stock` >= 0),
     `product_status` ENUM('active', 'blocked') NOT NULL,
     `created_at` DATETIME NOT NULL,
-    FOREIGN KEY (`fk_id_category`) REFERENCES `categories`(`id_category`) ON DELETE CASCADE,
+    FOREIGN KEY (`fk_id_category`) REFERENCES `categories`(`id_category`) ON DELETE RESTRICT,
     FOREIGN KEY (`fk_created_by`) REFERENCES `user`(`id_user`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

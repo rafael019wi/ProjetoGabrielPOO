@@ -1,0 +1,72 @@
+package org.example.entity;
+
+import java.time.LocalDateTime;
+
+public class Category {
+    private Integer id;
+    private Integer createdBy;
+    private String creatorName;
+    private String name;
+    private LocalDateTime createdAt;
+
+    public Category(Integer id, Integer createdBy, String name) {
+        this.id = id;
+        this.createdBy = createdBy;
+        this.name = name;
+    }
+
+    public Category(Integer id, Integer createdBy, String name, LocalDateTime createdAt) {
+        this.id = id;
+        this.createdBy = createdBy;
+        this.name = name;
+        this.createdAt= createdAt;
+    }
+
+    public Category(Integer id, Integer createdBy, String creatorName, String name, LocalDateTime createdAt) {
+        this.id = id;
+        this.createdBy = createdBy;
+        this.creatorName = creatorName;
+        this.name = name;
+        this.createdAt= createdAt;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public String getCreatorName() {
+        return creatorName;
+    }
+
+    public void setCreatorName(String creatorName) {
+        this.creatorName = creatorName;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
+    }
+}
