@@ -165,15 +165,17 @@ public class Usuario {
         TextField txtEmail = new TextField(usuario.getEmail());
         TextField txtTelefone = new TextField(usuario.getPhone());
 
+
         ComboBox<String> cbStatus = new ComboBox<>();
         cbStatus.getItems().addAll("active", "blocked");
         cbStatus.setMaxWidth(Double.MAX_VALUE);
         cbStatus.setValue(usuario.getStatus());
 
+        Button btnRedefinirSenha = new Button("Redefinir senha");
         Button btnSalvar = new Button("Salvar Alterações");
         Button btnCancelar = new Button("Cancelar");
 
-        HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
+        HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar, btnRedefinirSenha);
         containerBotoes.setAlignment(Pos.CENTER_RIGHT);
 
         btnSalvar.setOnAction(e -> {
@@ -198,6 +200,7 @@ public class Usuario {
                 alert.showAndWait();
             }
         });
+        btnRedefinirSenha.setOnAction(e -> abrirJanelaRedefinirSenha(janelaEditar, usuario));
 
         btnCancelar.setOnAction(e -> janelaEditar.close());
 
@@ -216,6 +219,69 @@ public class Usuario {
         janelaEditar.setResizable(false);
         janelaEditar.showAndWait();
     }
+    private void abrirJanelaRedefinirSenha(Stage dono, User usuario) {
+        Stage janelaSenha = new Stage();
+        janelaSenha.setTitle("Redefinir Senha - " + usuario.getName());
+        janelaSenha.initModality(Modality.WINDOW_MODAL);
+        janelaSenha.initOwner(dono);
+
+        VBox layout = new VBox(12);
+        layout.setPadding(new Insets(20));
+        layout.setStyle("-fx-background-color: #F4F4F4;");
+
+        // Campos de senha mascarados
+        PasswordField txtSenhaAtual = new PasswordField();
+        txtSenhaAtual.setPromptText("Digite a senha atual");
+
+        PasswordField txtNovaSenha = new PasswordField();
+        txtNovaSenha.setPromptText("Digite a nova senha");
+
+        PasswordField txtConfirmarSenha = new PasswordField();
+        txtConfirmarSenha.setPromptText("Confirme a nova senha");
+
+        Button btnSalvar = new Button("Alterar Senha");
+        btnSalvar.setStyle("-fx-background-color: #2F1CD8; -fx-text-fill: white; -fx-cursor: hand;");
+
+        Button btnCancelar = new Button("Cancelar");
+
+        HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
+        containerBotoes.setAlignment(Pos.CENTER_RIGHT);
+
+        // Conexão direta com o método updatePassword do seu UserDAO
+        btnSalvar.setOnAction(e -> {
+            String senhaAtual = txtSenhaAtual.getText();
+            String novaSenha = txtNovaSenha.getText();
+            String confirmarSenha = txtConfirmarSenha.getText();
+
+            UserDAO userDAO = new UserDAO();
+            Result<Void> resultado = userDAO.updatePassword(senhaAtual, novaSenha, confirmarSenha, usuario.getId());
+
+            if (resultado.isSuccess()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, resultado.getMessage(), ButtonType.OK);
+                alert.showAndWait();
+                janelaSenha.close();
+            } else {
+                // Exibe exatamente o erro tratado no seu DAO (ex: "A senha atual está incorreta.")
+                Alert alert = new Alert(Alert.AlertType.ERROR, resultado.getMessage(), ButtonType.OK);
+                alert.showAndWait();
+            }
+        });
+
+        btnCancelar.setOnAction(e -> janelaSenha.close());
+
+        layout.getChildren().addAll(
+                new Label("Senha Atual:"), txtSenhaAtual,
+                new Label("Nova Senha:"), txtNovaSenha,
+                new Label("Confirmar Nova Senha:"), txtConfirmarSenha,
+                containerBotoes
+        );
+
+        Scene cena = new Scene(layout, 360, 320);
+        janelaSenha.setScene(cena);
+        janelaSenha.setResizable(false);
+        janelaSenha.showAndWait();
+    }
+
 
     private void abrirJanelaCadastro(Stage dono, TableView<User> tabela) {
         Stage janelaCadastro = new Stage();
@@ -243,5 +309,56 @@ public class Usuario {
         txtConfirmarSenha.setPromptText("Confirme a senha");
 
         ComboBox<String> cbStatus = new ComboBox<>();
+        cbStatus.getItems().addAll("active", "blocked");
+        cbStatus.setValue("active");
+        cbStatus.setMaxWidth(Double.MAX_VALUE);
+
+        Button btnSalvar = new Button("Cadastrar");
+        btnSalvar.setStyle("-fx-background-color: #2F1CD8; -fx-text-fill: white; -fx-cursor: hand;");
+
+        Button btnCancelar = new Button("Cancelar");
+
+        HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
+        containerBotoes.setAlignment(Pos.CENTER_RIGHT);
+
+        btnSalvar.setOnAction(e -> {
+            String nome = txtNome.getText().trim();
+            String email = txtEmail.getText().trim();
+            String telefone = txtTelefone.getText().trim();
+            String senha = txtSenha.getText();
+            String confirmarSenha = txtConfirmarSenha.getText();
+            String status = cbStatus.getValue();
+
+            UserDAO userDAO = new UserDAO();
+            Result<User> resultado = userDAO.createUser(nome, email, telefone, senha, confirmarSenha, status);
+
+            if (resultado.isSuccess()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, resultado.getMessage(), ButtonType.OK);
+                alert.showAndWait();
+
+                atualizarTabelaDeUsuarios(tabela);
+                janelaCadastro.close();
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR, resultado.getMessage(), ButtonType.OK);
+                alert.showAndWait();
+            }
+        });
+
+        btnCancelar.setOnAction(e -> janelaCadastro.close());
+
+        layoutForm.getChildren().addAll(
+                new Label("Nome Completo:"), txtNome,
+                new Label("E-mail:"), txtEmail,
+                new Label("Telefone:"), txtTelefone,
+                new Label("Senha:"), txtSenha,
+                new Label("Confirmar Senha:"), txtConfirmarSenha,
+                new Label("Status:"), cbStatus,
+                containerBotoes
+        );
+
+        Scene cenaCadastro = new Scene(layoutForm, 400, 520);
+        janelaCadastro.setScene(cenaCadastro);
+        janelaCadastro.setResizable(false);
+        janelaCadastro.showAndWait();
     }
 }

@@ -18,7 +18,6 @@ public class App extends Application {
     public void start(Stage stage) {
 
         Login login = new Login();
-
         Scene cena = new Scene(login.criarTela(stage), 500, 300);
 
         stage.setTitle("StockMaster Fx");
