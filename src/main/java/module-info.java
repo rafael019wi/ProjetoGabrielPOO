@@ -8,4 +8,6 @@ module org.example {
 
     exports org.example.views;
     opens org.example.views to javafx.fxml, javafx.graphics;
+
+    opens org.example.entity to javafx.base, javafx.fxml;
 }

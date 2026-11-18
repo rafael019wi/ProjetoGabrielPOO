@@ -10,6 +10,12 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.stage.Modality;
 import javafx.util.Callback;
+import org.example.DAO.UserDAO;
+import org.example.entity.User;
+import java.util.List;
+import org.example.dto.Result;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class Usuario extends Application {
 
@@ -26,70 +32,97 @@ public class Usuario extends Application {
 
         root.setLeft(menuInstanciado);
 
+        //Botao de usuario
+        HBox cabecalho = new HBox(20);
+        cabecalho.setAlignment(Pos.CENTER_LEFT);
+
         Label lbTitulo = new Label("Gestão de usuários");
         lbTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
 
-        //CONFIGURAÇÃO TABELA
-        TableView<UsuarioData> tabela = new TableView<>();
+        Region espacador = new Region();
+        HBox.setHgrow(espacador, Priority.ALWAYS); // Empurra o botão para o canto direito
 
-        TableColumn<UsuarioData, String> colId = new TableColumn<>("Id");
+        Button btnNovoUsuario = new Button("+ Novo Usuário");
+        btnNovoUsuario.setStyle(
+                "-fx-background-color: #2F1CD8;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-padding: 8 16 8 16;" +
+                        "-fx-cursor: hand;"
+        );
+
+
+        // CONFIGURAÇÃO TABELA
+        TableView<User> tabela = new TableView<>();
+
+        btnNovoUsuario.setOnAction(e -> abrirJanelaCadastro(stage, tabela)); // ⬅️ PONTO 1 (Continuacao)
+        cabecalho.getChildren().addAll(lbTitulo, espacador, btnNovoUsuario);
+
+        TableColumn<User, Integer> colId = new TableColumn<>("Id");
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
 
-        TableColumn<UsuarioData, String> colNome = new TableColumn<>("Nome completo");
-        colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
+        TableColumn<User, String> colNome = new TableColumn<>("Nome completo");
+        colNome.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-        TableColumn<UsuarioData, String> colStatus = new TableColumn<>("Status");
+        TableColumn<User, String> colStatus = new TableColumn<>("Status");
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        TableColumn<UsuarioData, String> colCriado = new TableColumn<>("Criado em");
-        colCriado.setCellValueFactory(new PropertyValueFactory<>("criadoEm"));
+        TableColumn<User, String> colCriado = new TableColumn<>("Criado em");
+        colCriado.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
 
-        TableColumn<UsuarioData, String> colEmail = new TableColumn<>("E-mail");
+        TableColumn<User, String> colEmail = new TableColumn<>("E-mail");
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
 
-        TableColumn<UsuarioData, String> Telefone = new TableColumn<>("Telefone");
-        Telefone.setCellValueFactory(new PropertyValueFactory<>("telefone"));
+        TableColumn<User, String> Telefone = new TableColumn<>("Telefone");
+        Telefone.setCellValueFactory(new PropertyValueFactory<>("phone"));
 
-        TableColumn<UsuarioData, String> CriadoPor = new TableColumn<>("Criado por");
-        CriadoPor.setCellValueFactory(new PropertyValueFactory<>("criadoPor"));
+        tabela.getColumns().addAll(colId, colNome, colEmail, colStatus);
+
+        // Dispara a carga do banco de dados na inicialização
+        atualizarTabelaDeUsuarios(tabela);
 
         // NOVA COLUNA AÇÕES
-        TableColumn<UsuarioData, Void> colAcoes = new TableColumn<>("Ações");
+        TableColumn<User, Void> colAcoes = new TableColumn<>("Ações");
 
-        Callback<TableColumn<UsuarioData, Void>, TableCell<UsuarioData, Void>> cellFactory = new Callback<>() {
+        Callback<TableColumn<User, Void>, TableCell<User, Void>> cellFactory = new Callback<>() {
             @Override
-            public TableCell<UsuarioData, Void> call(final TableColumn<UsuarioData, Void> param) {
+            public TableCell<User, Void> call(final TableColumn<User, Void> param) {
                 return new TableCell<>() {
-                    // Criamos os botões que ficarão dentro da célula
                     private final Button btnEditar = new Button("✏️");
                     private final Button btnApagar = new Button("🗑️");
                     private final HBox containerBotoes = new HBox(10, btnEditar, btnApagar);
 
                     {
-                        // Estilização rápida para remover o fundo padrão dos botões e deixá-los limpos
                         btnEditar.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
                         btnApagar.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
                         containerBotoes.setAlignment(Pos.CENTER);
 
-                        // Ação do botão Editar
+                        // Ação do botão Editar corrigida para trabalhar com User
                         btnEditar.setOnAction(event -> {
-                            UsuarioData usuarioSelecionado = getTableView().getItems().get(getIndex());
+                            User usuarioSelecionado = getTableView().getItems().get(getIndex());
                             abrirJanelaEdicao(stage, usuarioSelecionado, getTableView());
-                            // Aqui você chama a sua lógica ou tela de edição passando o objeto 'usuario'
                         });
 
-                        // Ação do botão Apagar
+                        // Ação do botão Apagar com conexão ao Back-End do UserDAO
                         btnApagar.setOnAction(event -> {
-                            UsuarioData usuario = getTableView().getItems().get(getIndex());
-                            // Exemplo de remoção direta da lista da tabela
-                            getTableView().getItems().remove(usuario);
+                            User usuario = getTableView().getItems().get(getIndex());
+
+                            UserDAO userDAO = new UserDAO();
+                            Result resultado = userDAO.deleteUser(usuario.getId());
+
+                            if (resultado.isSuccess()) {
+                                getTableView().getItems().remove(usuario);
+                                System.out.println("Usuário removido: " + resultado.getMessage());
+                            } else {
+                                Alert alert = new Alert(Alert.AlertType.ERROR, resultado.getMessage(), ButtonType.OK);
+                                alert.showAndWait();
+                            }
                         });
                     }
 
                     @Override
                     protected void updateItem(Void item, boolean empty) {
                         super.updateItem(item, empty);
-                        // Se a linha estiver vazia, não mostra nada. Se tiver dados, renderiza o HBox com os botões
                         if (empty) {
                             setGraphic(null);
                         } else {
@@ -100,18 +133,14 @@ public class Usuario extends Application {
             }
         };
 
-        // Aplica a fábrica de células criada acima na coluna de ações
         colAcoes.setCellFactory(cellFactory);
 
-        // Adiciona todas as colunas incluindo a nova coluna de ações
-        tabela.getColumns().addAll(colId, colNome, colStatus, colCriado, CriadoPor, colEmail, Telefone, colAcoes );
+        // Monta a grade com todas as colunas sincronizadas em User
+        tabela.getColumns().clear();
+        tabela.getColumns().addAll(colId, colNome, colStatus, colCriado, colEmail, Telefone, colAcoes);
         tabela.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        // Dados de teste
-        tabela.getItems().add(new UsuarioData("8906578", "Jailson Leve", "Ativo", "01/02/2025", "Dev_Link", "Zedamanga@gmail.com","1999879"));
-        tabela.getItems().add(new UsuarioData("8906578", "Pesadao Leve", "Ativo", "01/02/2025", "Dev_Link", "Zedamanga@gmail.com","1999876"));
-
-        conteudoCentral.getChildren().addAll(lbTitulo, tabela);
+        conteudoCentral.getChildren().addAll(cabecalho, tabela);
         root.setCenter(conteudoCentral);
 
         Scene scene = new Scene(root, 1000, 600);
@@ -119,111 +148,175 @@ public class Usuario extends Application {
         stage.setTitle("Painel Administrativo");
         stage.show();
     }
-    private void abrirJanelaEdicao(Stage dono, UsuarioData usuario, TableView<UsuarioData> tabela) {
+
+    public void atualizarTabelaDeUsuarios(TableView<User> tabela) {
+        UserDAO userDAO = new UserDAO();
+        Result resultado = userDAO.getAllUsers();
+
+        if (resultado.isSuccess()) {
+            List<User> listaUsuarios = (List<User>) resultado.getData();
+            ObservableList<User> dadosGraficos = FXCollections.observableArrayList(listaUsuarios);
+            tabela.setItems(dadosGraficos);
+        } else {
+            System.err.println("Erro ao listar usuários: " + resultado.getMessage());
+        }
+    }
+
+    // Janela de Edição sincronizada com o objeto User do banco de dados
+    private void abrirJanelaEdicao(Stage dono, User usuario, TableView<User> tabela) {
         Stage janelaEditar = new Stage();
         janelaEditar.setTitle("Editar Usuário");
-        janelaEditar.initModality(Modality.WINDOW_MODAL); // Bloqueia a janela de trás enquanto aberta
+        janelaEditar.initModality(Modality.WINDOW_MODAL);
         janelaEditar.initOwner(dono);
 
         VBox layoutForm = new VBox(10);
         layoutForm.setPadding(new Insets(20));
         layoutForm.setStyle("-fx-background-color: #F4F4F4;");
 
-        // 🔒 CAMPOS BLOQUEADOS (Não editáveis - setEditable(false))
-        TextField txtId = new TextField(usuario.getId());
+        // 🔒 CAMPOS BLOQUEADOS
+        TextField txtId = new TextField(String.valueOf(usuario.getId()));
         txtId.setEditable(false);
-        txtId.setStyle("-fx-background-color: #E0E0E0;"); // Visual cinza indicando bloqueio
+        txtId.setStyle("-fx-background-color: #E0E0E0;");
 
-        TextField txtCriadoEm = new TextField(usuario.getCriadoEm());
+        TextField txtCriadoEm = new TextField(usuario.getCreatedAt() != null ? usuario.getCreatedAt().toString() : "");
         txtCriadoEm.setEditable(false);
         txtCriadoEm.setStyle("-fx-background-color: #E0E0E0;");
 
-        TextField txtCriadoPor = new TextField(usuario.getCriadoPor());
-        txtCriadoPor.setEditable(false);
-        txtCriadoPor.setStyle("-fx-background-color: #E0E0E0;");
-
         // 🔓 CAMPOS LIBERADOS PARA EDIÇÃO
-        TextField txtNome = new TextField(usuario.getNome());
+        TextField txtNome = new TextField(usuario.getName());
         TextField txtEmail = new TextField(usuario.getEmail());
-        TextField txtTelefone = new TextField(usuario.getTelefone());
+        TextField txtTelefone = new TextField(usuario.getPhone());
 
         ComboBox<String> cbStatus = new ComboBox<>();
-        cbStatus.getItems().addAll("Ativo", "Inativo"); // Adiciona as duas opções na caixinha
-        cbStatus.setMaxWidth(Double.MAX_VALUE);         // Faz a caixinha ocupar toda a largura disponível
-
+        cbStatus.getItems().addAll("active", "blocked");
+        cbStatus.setMaxWidth(Double.MAX_VALUE);
         cbStatus.setValue(usuario.getStatus());
 
-        // BOTÕES DO FORMULÁRIO
         Button btnSalvar = new Button("Salvar Alterações");
         Button btnCancelar = new Button("Cancelar");
 
         HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
         containerBotoes.setAlignment(Pos.CENTER_RIGHT);
 
-        // Ação do botão salvar (Modifica o objeto e atualiza o componente visual)
+        // Integração do clique do Salvar com o método updateProfile do banco de dados
         btnSalvar.setOnAction(e -> {
-            usuario.setNome(txtNome.getText());
-            usuario.setEmail(txtEmail.getText());
-            usuario.setTelefone(txtTelefone.getText());
+            String nomeInput = txtNome.getText().trim();
+            String emailInput = txtEmail.getText().trim();
+            String telefoneInput = txtTelefone.getText().trim();
+            String statusInput = cbStatus.getValue();
 
-            usuario.setStatus(cbStatus.getValue());
+            UserDAO userDAO = new UserDAO();
+            Result resultadoUpdate = userDAO.updateProfile(nomeInput, emailInput, telefoneInput, statusInput, usuario.getId());
 
-            tabela.refresh(); // Diz para a tabela redesenhar as linhas com os novos dados
-            janelaEditar.close();
+            if (resultadoUpdate.isSuccess()) {
+                // Sincroniza o objeto local com as modificações confirmadas pelo banco
+                usuario.setName(nomeInput);
+                usuario.setEmail(emailInput);
+                usuario.setPhone(telefoneInput);
+                usuario.setStatus(statusInput);
+
+                tabela.refresh();
+                janelaEditar.close();
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR, resultadoUpdate.getMessage(), ButtonType.OK);
+                alert.showAndWait();
+            }
         });
 
         btnCancelar.setOnAction(e -> janelaEditar.close());
 
-        // Adiciona tudo na tela verticalmente organizando com Labels descritivos
         layoutForm.getChildren().addAll(
                 new Label("ID (Bloqueado):"), txtId,
                 new Label("Criado Em (Bloqueado):"), txtCriadoEm,
-                new Label("Criado Por (Bloqueado):"), txtCriadoPor,
                 new Label("Nome Completo:"), txtNome,
                 new Label("Status:"), cbStatus,
                 new Label("E-mail:"), txtEmail,
                 new Label("Telefone:"), txtTelefone,
                 containerBotoes
         );
-        Scene cenaEdicao = new Scene(layoutForm, 400, 550);
+
+        Scene cenaEdicao = new Scene(layoutForm, 400, 500);
         janelaEditar.setScene(cenaEdicao);
         janelaEditar.setResizable(false);
         janelaEditar.showAndWait();
     }
+    private void abrirJanelaCadastro(Stage dono, TableView<User> tabela) {
+        Stage janelaCadastro = new Stage();
+        janelaCadastro.setTitle("Cadastrar Novo Usuário");
+        janelaCadastro.initModality(Modality.WINDOW_MODAL);
+        janelaCadastro.initOwner(dono);
 
-    // Classe de modelo interna
-    public static class UsuarioData {
-        private final String id;
-        private String nome;
-        private String status;
-        private final String criadoEm;
-        private String email;
-        private String telefone;
-        private final String criadoPor;
+        VBox layoutForm = new VBox(10);
+        layoutForm.setPadding(new Insets(20));
+        layoutForm.setStyle("-fx-background-color: #F4F4F4;");
 
-        public UsuarioData(String id, String nome, String status, String criadoEm,String criadoPor, String email, String telefone) {
-            this.id = id;
-            this.nome = nome;
-            this.status = status;
-            this.criadoEm = criadoEm;
-            this.criadoPor = criadoPor;
-            this.email = email;
-            this.telefone = telefone;
-        }
+        TextField txtNome = new TextField();
+        txtNome.setPromptText("Digite o nome completo");
 
-        public String getId() { return id; }
-        public String getNome() { return nome; }
-        public String getStatus() { return status; }
-        public String getCriadoEm() { return criadoEm; }
-        public String getEmail() { return email; }
-        public String getTelefone() { return telefone; }
-        public String getCriadoPor() { return criadoPor; }
+        TextField txtEmail = new TextField();
+        txtEmail.setPromptText("Digite o e-mail");
 
-        public void setNome(String nome) { this.nome = nome; }
-        public void setStatus(String status) { this.status = status; }
-        public void setEmail(String email) { this.email = email; }
-        public void setTelefone(String telefone) { this.telefone = telefone; }
+        TextField txtTelefone = new TextField();
+        txtTelefone.setPromptText("Digite o telefone");
 
+        PasswordField txtSenha = new PasswordField();
+        txtSenha.setPromptText("Crie uma senha");
+
+        PasswordField txtConfirmarSenha = new PasswordField();
+        txtConfirmarSenha.setPromptText("Confirme a senha");
+
+        ComboBox<String> cbStatus = new ComboBox<>();
+        cbStatus.getItems().addAll("active", "blocked");
+        cbStatus.setValue("active");
+        cbStatus.setMaxWidth(Double.MAX_VALUE);
+
+        Button btnSalvar = new Button("Cadastrar");
+        btnSalvar.setStyle("-fx-background-color: #2F1CD8; -fx-text-fill: white;");
+
+        Button btnCancelar = new Button("Cancelar");
+
+        HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
+        containerBotoes.setAlignment(Pos.CENTER_RIGHT);
+
+        btnSalvar.setOnAction(e -> {
+            String nome = txtNome.getText().trim();
+            String email = txtEmail.getText().trim();
+            String telefone = txtTelefone.getText().trim();
+            String senha = txtSenha.getText();
+            String confirmarSenha = txtConfirmarSenha.getText();
+            String status = cbStatus.getValue();
+
+            UserDAO userDAO = new UserDAO();
+            Result<User> resultado = userDAO.createUser(nome, email, telefone, senha, confirmarSenha, status);
+
+            if (resultado.isSuccess()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, resultado.getMessage(), ButtonType.OK);
+                alert.showAndWait();
+
+                atualizarTabelaDeUsuarios(tabela);
+                janelaCadastro.close();
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR, resultado.getMessage(), ButtonType.OK);
+                alert.showAndWait();
+            }
+        });
+
+        btnCancelar.setOnAction(e -> janelaCadastro.close());
+
+        layoutForm.getChildren().addAll(
+                new Label("Nome Completo:"), txtNome,
+                new Label("E-mail:"), txtEmail,
+                new Label("Telefone:"), txtTelefone,
+                new Label("Senha:"), txtSenha,
+                new Label("Confirmar Senha:"), txtConfirmarSenha,
+                new Label("Status:"), cbStatus,
+                containerBotoes
+        );
+
+        Scene cenaCadastro = new Scene(layoutForm, 400, 520);
+        janelaCadastro.setScene(cenaCadastro);
+        janelaCadastro.setResizable(false);
+        janelaCadastro.showAndWait();
     }
 
     public static void main(String[] args) {
