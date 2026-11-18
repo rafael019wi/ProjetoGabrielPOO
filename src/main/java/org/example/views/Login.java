@@ -1,12 +1,13 @@
-
 package org.example.views;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -72,36 +73,44 @@ public class Login {
             String senha = tfSenha.getText();
 
             if (email.isEmpty() || senha.isEmpty()) {
+                labelMensagem.setStyle("-fx-text-fill: red;");
                 labelMensagem.setText("Por favor, preencha todos os campos!");
                 return;
             }
 
             try {
-
                 UserDAO userDAO = new UserDAO();
-
                 Result resultadoLogin = userDAO.login(email, senha);
 
                 if (resultadoLogin.isSuccess()) {
 
                     User usuarioAutenticado = (User) resultadoLogin.getData();
-
                     UserSession.setLoggedUser(usuarioAutenticado);
 
                     labelMensagem.setStyle("-fx-text-fill: green;");
                     labelMensagem.setText("Login realizado com sucesso!");
 
-                    // Redireciona para a tela de usuários
-                    Usuario telaUsuario = new Usuario();
-
                     try {
-                        telaUsuario.start(stage);
+                        // 1. Cria a estrutura principal do painel administrativo
+                        BorderPane root = new BorderPane();
+
+                        // 2. Instancia e encaixa o Menu Lateral na esquerda
+                        MenuLateral construtorMenu = new MenuLateral();
+                        root.setLeft(construtorMenu.criarMenuLateral(root, stage));
+
+                        // 3. Instancia a página de Usuários e encaixa o VBox dela no centro
+                        Usuario telaUsuario = new Usuario();
+                        root.setCenter(telaUsuario.getView(stage));
+
+                        // 4. Troca a cena da janela atual para o painel administrativo
+                        Scene cenaPainel = new Scene(root, 1000, 600);
+                        stage.setTitle("StockMaster Fx - Painel Administrativo");
+                        stage.setScene(cenaPainel);
+                        stage.centerOnScreen();
 
                     } catch (Exception ex) {
                         labelMensagem.setStyle("-fx-text-fill: red;");
-                        labelMensagem.setText(
-                                "Erro ao carregar a página de administração."
-                        );
+                        labelMensagem.setText("Erro ao carregar a página de administração.");
                         ex.printStackTrace();
                     }
 
@@ -112,9 +121,7 @@ public class Login {
 
             } catch (Exception ex) {
                 labelMensagem.setStyle("-fx-text-fill: red;");
-                labelMensagem.setText(
-                        "Erro crítico de conexão com o banco de dados."
-                );
+                labelMensagem.setText("Erro crítico de conexão com o banco de dados.");
                 ex.printStackTrace();
             }
         });

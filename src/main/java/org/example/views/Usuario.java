@@ -1,38 +1,31 @@
 package org.example.views;
 
-import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.stage.Stage;
 import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.example.DAO.UserDAO;
-import org.example.entity.User;
-import java.util.List;
 import org.example.dto.Result;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import org.example.entity.User;
 
-public class Usuario extends Application {
+import java.util.List;
 
-    public void start(Stage stage) {
-        BorderPane root = new BorderPane();
+public class Usuario {
 
-        // ÁREA CENTRAL
+    // Método público que devolve o VBox pronto para ser encaixado na classe App
+    public VBox getView(Stage stage) {
         VBox conteudoCentral = new VBox(20);
         conteudoCentral.setPadding(new Insets(40));
         conteudoCentral.setAlignment(Pos.TOP_LEFT);
 
-        MenuLateral construtorMenu = new MenuLateral();
-        VBox menuInstanciado = construtorMenu.criarMenuLateral(root, stage);
-
-        root.setLeft(menuInstanciado);
-
-        //Botao de usuario
+        // Cabeçalho com título e botão
         HBox cabecalho = new HBox(20);
         cabecalho.setAlignment(Pos.CENTER_LEFT);
 
@@ -40,7 +33,7 @@ public class Usuario extends Application {
         lbTitulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
 
         Region espacador = new Region();
-        HBox.setHgrow(espacador, Priority.ALWAYS); // Empurra o botão para o canto direito
+        HBox.setHgrow(espacador, Priority.ALWAYS);
 
         Button btnNovoUsuario = new Button("+ Novo Usuário");
         btnNovoUsuario.setStyle(
@@ -51,11 +44,10 @@ public class Usuario extends Application {
                         "-fx-cursor: hand;"
         );
 
-
-        // CONFIGURAÇÃO TABELA
+        // Configuração da Tabela
         TableView<User> tabela = new TableView<>();
 
-        btnNovoUsuario.setOnAction(e -> abrirJanelaCadastro(stage, tabela)); // ⬅️ PONTO 1 (Continuacao)
+        btnNovoUsuario.setOnAction(e -> abrirJanelaCadastro(stage, tabela));
         cabecalho.getChildren().addAll(lbTitulo, espacador, btnNovoUsuario);
 
         TableColumn<User, Integer> colId = new TableColumn<>("Id");
@@ -73,15 +65,13 @@ public class Usuario extends Application {
         TableColumn<User, String> colEmail = new TableColumn<>("E-mail");
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
 
-        TableColumn<User, String> Telefone = new TableColumn<>("Telefone");
-        Telefone.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        TableColumn<User, String> colTelefone = new TableColumn<>("Telefone");
+        colTelefone.setCellValueFactory(new PropertyValueFactory<>("phone"));
 
-        tabela.getColumns().addAll(colId, colNome, colEmail, colStatus);
-
-        // Dispara a carga do banco de dados na inicialização
+        // Carrega os dados iniciais do banco
         atualizarTabelaDeUsuarios(tabela);
 
-        // NOVA COLUNA AÇÕES
+        // Coluna de Ações
         TableColumn<User, Void> colAcoes = new TableColumn<>("Ações");
 
         Callback<TableColumn<User, Void>, TableCell<User, Void>> cellFactory = new Callback<>() {
@@ -97,13 +87,11 @@ public class Usuario extends Application {
                         btnApagar.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
                         containerBotoes.setAlignment(Pos.CENTER);
 
-                        // Ação do botão Editar corrigida para trabalhar com User
                         btnEditar.setOnAction(event -> {
                             User usuarioSelecionado = getTableView().getItems().get(getIndex());
                             abrirJanelaEdicao(stage, usuarioSelecionado, getTableView());
                         });
 
-                        // Ação do botão Apagar com conexão ao Back-End do UserDAO
                         btnApagar.setOnAction(event -> {
                             User usuario = getTableView().getItems().get(getIndex());
 
@@ -112,7 +100,6 @@ public class Usuario extends Application {
 
                             if (resultado.isSuccess()) {
                                 getTableView().getItems().remove(usuario);
-                                System.out.println("Usuário removido: " + resultado.getMessage());
                             } else {
                                 Alert alert = new Alert(Alert.AlertType.ERROR, resultado.getMessage(), ButtonType.OK);
                                 alert.showAndWait();
@@ -135,18 +122,12 @@ public class Usuario extends Application {
 
         colAcoes.setCellFactory(cellFactory);
 
-        // Monta a grade com todas as colunas sincronizadas em User
-        tabela.getColumns().clear();
-        tabela.getColumns().addAll(colId, colNome, colStatus, colCriado, colEmail, Telefone, colAcoes);
+        tabela.getColumns().addAll(colId, colNome, colStatus, colCriado, colEmail, colTelefone, colAcoes);
         tabela.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         conteudoCentral.getChildren().addAll(cabecalho, tabela);
-        root.setCenter(conteudoCentral);
 
-        Scene scene = new Scene(root, 1000, 600);
-        stage.setScene(scene);
-        stage.setTitle("Painel Administrativo");
-        stage.show();
+        return conteudoCentral;
     }
 
     public void atualizarTabelaDeUsuarios(TableView<User> tabela) {
@@ -162,7 +143,6 @@ public class Usuario extends Application {
         }
     }
 
-    // Janela de Edição sincronizada com o objeto User do banco de dados
     private void abrirJanelaEdicao(Stage dono, User usuario, TableView<User> tabela) {
         Stage janelaEditar = new Stage();
         janelaEditar.setTitle("Editar Usuário");
@@ -173,7 +153,6 @@ public class Usuario extends Application {
         layoutForm.setPadding(new Insets(20));
         layoutForm.setStyle("-fx-background-color: #F4F4F4;");
 
-        // 🔒 CAMPOS BLOQUEADOS
         TextField txtId = new TextField(String.valueOf(usuario.getId()));
         txtId.setEditable(false);
         txtId.setStyle("-fx-background-color: #E0E0E0;");
@@ -182,7 +161,6 @@ public class Usuario extends Application {
         txtCriadoEm.setEditable(false);
         txtCriadoEm.setStyle("-fx-background-color: #E0E0E0;");
 
-        // 🔓 CAMPOS LIBERADOS PARA EDIÇÃO
         TextField txtNome = new TextField(usuario.getName());
         TextField txtEmail = new TextField(usuario.getEmail());
         TextField txtTelefone = new TextField(usuario.getPhone());
@@ -198,7 +176,6 @@ public class Usuario extends Application {
         HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
         containerBotoes.setAlignment(Pos.CENTER_RIGHT);
 
-        // Integração do clique do Salvar com o método updateProfile do banco de dados
         btnSalvar.setOnAction(e -> {
             String nomeInput = txtNome.getText().trim();
             String emailInput = txtEmail.getText().trim();
@@ -209,7 +186,6 @@ public class Usuario extends Application {
             Result resultadoUpdate = userDAO.updateProfile(nomeInput, emailInput, telefoneInput, statusInput, usuario.getId());
 
             if (resultadoUpdate.isSuccess()) {
-                // Sincroniza o objeto local com as modificações confirmadas pelo banco
                 usuario.setName(nomeInput);
                 usuario.setEmail(emailInput);
                 usuario.setPhone(telefoneInput);
@@ -240,6 +216,7 @@ public class Usuario extends Application {
         janelaEditar.setResizable(false);
         janelaEditar.showAndWait();
     }
+
     private void abrirJanelaCadastro(Stage dono, TableView<User> tabela) {
         Stage janelaCadastro = new Stage();
         janelaCadastro.setTitle("Cadastrar Novo Usuário");
@@ -266,60 +243,5 @@ public class Usuario extends Application {
         txtConfirmarSenha.setPromptText("Confirme a senha");
 
         ComboBox<String> cbStatus = new ComboBox<>();
-        cbStatus.getItems().addAll("active", "blocked");
-        cbStatus.setValue("active");
-        cbStatus.setMaxWidth(Double.MAX_VALUE);
-
-        Button btnSalvar = new Button("Cadastrar");
-        btnSalvar.setStyle("-fx-background-color: #2F1CD8; -fx-text-fill: white;");
-
-        Button btnCancelar = new Button("Cancelar");
-
-        HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
-        containerBotoes.setAlignment(Pos.CENTER_RIGHT);
-
-        btnSalvar.setOnAction(e -> {
-            String nome = txtNome.getText().trim();
-            String email = txtEmail.getText().trim();
-            String telefone = txtTelefone.getText().trim();
-            String senha = txtSenha.getText();
-            String confirmarSenha = txtConfirmarSenha.getText();
-            String status = cbStatus.getValue();
-
-            UserDAO userDAO = new UserDAO();
-            Result<User> resultado = userDAO.createUser(nome, email, telefone, senha, confirmarSenha, status);
-
-            if (resultado.isSuccess()) {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, resultado.getMessage(), ButtonType.OK);
-                alert.showAndWait();
-
-                atualizarTabelaDeUsuarios(tabela);
-                janelaCadastro.close();
-            } else {
-                Alert alert = new Alert(Alert.AlertType.ERROR, resultado.getMessage(), ButtonType.OK);
-                alert.showAndWait();
-            }
-        });
-
-        btnCancelar.setOnAction(e -> janelaCadastro.close());
-
-        layoutForm.getChildren().addAll(
-                new Label("Nome Completo:"), txtNome,
-                new Label("E-mail:"), txtEmail,
-                new Label("Telefone:"), txtTelefone,
-                new Label("Senha:"), txtSenha,
-                new Label("Confirmar Senha:"), txtConfirmarSenha,
-                new Label("Status:"), cbStatus,
-                containerBotoes
-        );
-
-        Scene cenaCadastro = new Scene(layoutForm, 400, 520);
-        janelaCadastro.setScene(cenaCadastro);
-        janelaCadastro.setResizable(false);
-        janelaCadastro.showAndWait();
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }
