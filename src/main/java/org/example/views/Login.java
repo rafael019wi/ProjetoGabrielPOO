@@ -32,7 +32,7 @@ public class Login extends Application {
         );
 
         TextField tfUsuario = new TextField();
-        tfUsuario.setPromptText("BV"); // Texto de dica que some ao digitar
+        tfUsuario.setPromptText("E-mail"); // Texto de dica que some ao digitar
         tfUsuario.setPrefHeight(40);  // Deixa o campo mais alto como na foto
         tfUsuario.setStyle(
                 "-fx-background-color: #D3D3D3;" +
@@ -49,6 +49,7 @@ public class Login extends Application {
                         "-fx-border-width: 1px;" +
                         "-fx-prompt-text-fill: #202020;"
         );
+
         Button botaoOk = new Button("Entrar");
         botaoOk.setPadding(new Insets(8, 25, 8, 25)); // Botão retangular largo
         botaoOk.setStyle(
@@ -61,12 +62,55 @@ public class Login extends Application {
         labelMensagem.setStyle("-fx-text-fill: red;");
 
         botaoOk.setOnAction(e -> {
-            if (tfUsuario.getText().isEmpty() || tfSenha.getText().isEmpty()) {
-                labelMensagem.setText("Preencha todos os campos!");
-            } else {
-                labelMensagem.setText("Tentando conectar com: " + tfUsuario.getText());
+            String email = tfUsuario.getText().trim();
+            String senha = tfSenha.getText();
+
+            // 1. Validação visual básica
+            if (email.isEmpty() || senha.isEmpty()) {
+                labelMensagem.setText("Por favor, preencha todos os campos!");
+                return;
             }
 
+            try {
+                // 2. Instancia o seu DAO (Back-End)
+                org.example.DAO.UserDAO userDAO = new org.example.DAO.UserDAO();
+
+                // 3. Chama o seu método de login (Retorna o container Result<User>)
+                org.example.dto.Result resultadoLogin = userDAO.login(email, senha);
+
+
+                // 4. Verifica se a validação do banco deu certo (campo 'success' do seu Result)
+                if (resultadoLogin.isSuccess()) { // Se o seu método do Result for .isSuccess() ou .getSuccess()
+
+                    // Extrai o objeto User de dentro do resultado
+                    org.example.entity.User usuarioAutenticado = (org.example.entity.User) resultadoLogin.getData();
+
+                    // Salva o usuário extraído na sessão global
+                    org.example.util.UserSession.setLoggedUser(usuarioAutenticado);
+
+                    labelMensagem.setStyle("-fx-text-fill: green;");
+                    labelMensagem.setText("Login realizado com sucesso! Redirecionando...");
+
+                    // Abre a tela de Administração de Usuários (Usuario.java)
+                    Usuario telaUsuario = new Usuario();
+                    try {
+                        telaUsuario.start(stage);
+                    } catch (Exception ex) {
+                        labelMensagem.setStyle("-fx-text-fill: red;");
+                        labelMensagem.setText("Erro ao carregar a página de administração.");
+                        ex.printStackTrace();
+                    }
+
+                } else {
+                    labelMensagem.setStyle("-fx-text-fill: red;");
+                    labelMensagem.setText(resultadoLogin.getMessage());
+                }
+
+            } catch (Exception ex) {
+                labelMensagem.setStyle("-fx-text-fill: red;");
+                labelMensagem.setText("Erro crítico de conexão com o banco de dados.");
+                ex.printStackTrace();
+            }
         });
 
         vbox.getChildren().addAll(labelNome, tfUsuario, tfSenha, botaoOk, labelMensagem);
