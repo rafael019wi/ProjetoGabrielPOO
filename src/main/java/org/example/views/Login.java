@@ -92,18 +92,13 @@ public class Login {
 
                     try {
                         // 1. Cria a estrutura principal do painel administrativo
-                        BorderPane root = new BorderPane();
+                        VisaoGeral visaoGeral = new VisaoGeral();
 
-                        // 2. Instancia e encaixa o Menu Lateral na esquerda
-                        MenuLateral construtorMenu = new MenuLateral();
-                        root.setLeft(construtorMenu.criarMenuLateral(root, stage));
+                        BorderPane root = visaoGeral.criarPagina(stage);
 
-                        // 3. Instancia a página de Usuários e encaixa o VBox dela no centro
-                        Usuario telaUsuario = new Usuario();
-                        root.setCenter(telaUsuario.getView(stage));
-
-                        // 4. Troca a cena da janela atual para o painel administrativo
+                        // Troca a cena da janela atual
                         Scene cenaPainel = new Scene(root, 1000, 600);
+
                         stage.setTitle("StockMaster Fx - Painel Administrativo");
                         stage.setScene(cenaPainel);
                         stage.centerOnScreen();
