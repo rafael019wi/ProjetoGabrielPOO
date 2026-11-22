@@ -1,184 +1,250 @@
 
 package org.example.views;
 
+import javafx.scene.layout.*;
+import org.example.DAO.ProductDAO;
+import org.example.DAO.CategoryDAO;
+import org.example.dto.Result;
+import org.example.entity.Product;
+import org.example.entity.Category;
+import org.example.entity.User;
+import org.example.util.UserSession;
+
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-import org.example.entity.Product;
+import java.util.List;
+import java.util.Optional;
 
 public class Produto {
 
-    private VBox prodView;
-    private BorderPane root;
+    private final Stage stage;
+    private final ProductDAO productDAO = new ProductDAO();
+    private final BorderPane root = new BorderPane();
+    private final TableView<Product> tabela = new TableView<>();
 
     public Produto(Stage stage) {
+        this.stage = stage;
+        configurarTabela();
+        configurarTela();
+        carregarProdutos();
+    }
 
-        // Painel principal
-        root = new BorderPane();
+    public BorderPane getView() {
+        return root;
+    }
 
-        // Conteúdo da página
-        prodView = new VBox(20);
-        prodView.setPadding(new Insets(30));
-        prodView.setStyle("-fx-background-color: #f4f4f4;");
+    private void configurarTela() {
 
-        // Cabeçalho
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
-
-        Label lblTitulo = new Label("Gestão de produtos");
-        lblTitulo.setStyle(
-                "-fx-font-size: 35px;" +
-                        " -fx-font-weight: bold;"
+        Label titulo = new Label("Gestão de produtos");
+        titulo.setStyle(
+                "-fx-font-size: 24px;" +
+                        "-fx-font-weight: bold;"
         );
-
-        Region espaco = new Region();
-        HBox.setHgrow(espaco, Priority.ALWAYS);
 
         Button btnAdd = new Button("Adicionar produto");
         btnAdd.setStyle(
-                "-fx-background-color: white;" +
-                        " -fx-border-color: #333;" +
-                        " -fx-cursor: hand;" +
-                        " -fx-font-family: 'Inter';" +
-                        " -fx-font-size: 16px;"
+                "-fx-background-color: #2F1CD8;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-padding: 8 16 8 16;" +
+                        "-fx-cursor: hand;"
         );
+        btnAdd.setOnAction(event -> adicionarProduto());
 
-        // Tabela de produtos
-        TableView<Product> tabela = new TableView<>();
-        tabela.setColumnResizePolicy(
-                TableView.CONSTRAINED_RESIZE_POLICY
-        );
-        tabela.setStyle("-fx-background-color: #e0e0e0;");
+        HBox header = new HBox(titulo, btnAdd);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(20));
 
-        // Coluna ID
-        TableColumn<Product, Integer> colId = new TableColumn<>("Id");
-        colId.setCellValueFactory(
-                new PropertyValueFactory<>("id")
-        );
+        Region espaco = new Region();
+        HBox.setHgrow(espaco, Priority.ALWAYS);
+        header.getChildren().add(1, espaco);
 
-        // Coluna Nome
-        TableColumn<Product, String> colNome =
-                new TableColumn<>("Nome do produto");
-        colNome.setCellValueFactory(
-                new PropertyValueFactory<>("nome")
-        );
+        VBox conteudo = new VBox(15, header, tabela);
+        conteudo.setPadding(new Insets(10));
 
-        // Coluna Estoque
-        TableColumn<Product, Integer> colEstoque =
-                new TableColumn<>("Estoque");
-        colEstoque.setCellValueFactory(
-                new PropertyValueFactory<>("estoque")
-        );
+        root.setCenter(conteudo);
+    }
 
-        // Coluna Preço
-        TableColumn<Product, Double> colPreco =
-                new TableColumn<>("Preço");
-        colPreco.setCellValueFactory(
-                new PropertyValueFactory<>("preco")
-        );
+    private void configurarTabela() {
 
-        // Coluna Status
-        TableColumn<Product, String> colStatus =
-                new TableColumn<>("Status produto");
-        colStatus.setCellValueFactory(
-                new PropertyValueFactory<>("status")
-        );
+        TableColumn<Product, Integer> colunaId = new TableColumn<>("ID");
+        colunaId.setStyle("-fx-alignment: center; ");
+        colunaId.setCellValueFactory( new PropertyValueFactory<>("id"));
 
-        // Coluna Autor
-        TableColumn<Product, String> colAutor =
-                new TableColumn<>("Autor");
-        colAutor.setCellValueFactory(
-                new PropertyValueFactory<>("autor")
-        );
+        TableColumn<Product, String> colunaNome = new TableColumn<>("Nome");
+        colunaNome.setStyle("-fx-alignment: center; ");
+        colunaNome.setCellValueFactory(new PropertyValueFactory<>("nameProduct"));
 
-        // Coluna Categoria
-        TableColumn<Product, Integer> colCat =
-                new TableColumn<>("Id categoria");
-        colCat.setCellValueFactory(
-                new PropertyValueFactory<>("categoria")
-        );
+        TableColumn<Product, String> colunaAutor = new TableColumn<>("Autor");
+        colunaAutor.setStyle("-fx-alignment: center; ");
+        colunaAutor.setCellValueFactory(new PropertyValueFactory<>("bookAuthor"));
 
-        // Coluna Ações
-        TableColumn<Product, Void> colAcoes =
-                new TableColumn<>("Ações");
+        TableColumn<Product, Integer> colunaEstoque = new TableColumn<>("Estoque");
+        colunaEstoque.setStyle("-fx-alignment: center; ");
+        colunaEstoque.setCellValueFactory(new PropertyValueFactory<>("stock"));
 
-        colAcoes.setCellFactory(param -> new TableCell<Product, Void>() {
+        TableColumn<Product, Double> colunaPreco = new TableColumn<>("Preço");
+        colunaPreco.setStyle("-fx-alignment: center; ");
+        colunaPreco.setCellValueFactory(new PropertyValueFactory<>("price"));
 
-            private final Button btnEditar = new Button("✏️");
-            private final Button btnExcluir = new Button("🗑️");
+        TableColumn<Product, String> colunaStatus = new TableColumn<>("Status");
+        colunaStatus.setStyle("-fx-alignment: center; ");
+        colunaStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
+        TableColumn<Product, Integer> colunaCategoria = new TableColumn<>("ID Categoria");
+        colunaCategoria.setStyle("-fx-alignment: center; ");
+        colunaCategoria.setCellValueFactory(new PropertyValueFactory<>("idCategory"));
+
+
+        TableColumn<Product, Void> colunaAcoes = new TableColumn<>("Ações");
+        colunaAcoes.setStyle("-fx-alignment: center; ");
+        colunaAcoes.setCellFactory(param -> new TableCell<>() {
+            private final Button btnEditar = new Button("Editar");
+            private final Button btnExcluir = new Button("Excluir");
+
+            private final HBox botoes = new HBox(8, btnEditar, btnExcluir);
             {
-                btnEditar.setStyle(
-                        "-fx-background-color: transparent;" +
-                                " -fx-cursor: hand;" +
-                                " -fx-font-size: 14px;"
-                );
+                btnEditar.setOnAction(event -> {
+                    Product produto = getTableView().getItems().get(getIndex());
+                    editarProduto(produto);
+                });
 
-                btnExcluir.setStyle(
-                        "-fx-background-color: transparent;" +
-                                " -fx-cursor: hand;" +
-                                " -fx-font-size: 14px;"
-                );
-            }
+                btnExcluir.setOnAction(event -> {
+                    Product produto = getTableView().getItems().get(getIndex());
+                    excluirProduto(produto);
+                });
 
-            private final HBox containerBotoes =
-                    new HBox(10, btnEditar, btnExcluir);
-
-            {
-                containerBotoes.setAlignment(Pos.CENTER);
+                botoes.setAlignment(Pos.CENTER);
             }
 
             @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty) {
+            protected void updateItem(Void item, boolean vazio) {
+                super.updateItem(item, vazio);
+                if (vazio) {
                     setGraphic(null);
                 } else {
-                    setGraphic(containerBotoes);
+                    setGraphic(botoes);
                 }
             }
         });
 
-        // Adiciona as colunas à tabela
         tabela.getColumns().addAll(
-                colId,
-                colNome,
-                colEstoque,
-                colPreco,
-                colStatus,
-                colAutor,
-                colCat,
-                colAcoes
+                colunaId, colunaNome,
+                colunaAutor, colunaEstoque,
+                colunaPreco, colunaStatus,
+                colunaCategoria, colunaAcoes
         );
 
-        // Configura o crescimento da tabela
-        VBox.setVgrow(tabela, Priority.ALWAYS);
 
-        // Monta o cabeçalho
-        header.getChildren().addAll(
-                lblTitulo,
-                espaco,
-                btnAdd
-        );
 
-        // Adiciona os componentes ao conteúdo
-        prodView.getChildren().addAll(header, tabela);
-
-        // Adiciona o conteúdo ao centro do BorderPane
-        root.setCenter(prodView);
-
-        // Cria e adiciona o menu lateral
-        MenuLateral menu = new MenuLateral();
-        menu.criarMenuLateral(root, stage);
+        tabela.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
-    // Retorna a tela completa
-    public BorderPane getView() {
-        return root;
+    private void carregarProdutos() {
+
+        Result<List<Product>> resultado = productDAO.getAllProducts();
+
+        if (resultado == null || !resultado.isSuccess()) {
+            mostrarErro(resultado != null ? resultado.getMessage() : "Não foi possível carregar os produtos.");
+            return;
+        }
+
+        tabela.setItems(
+                FXCollections.observableArrayList(resultado.getData())
+        );
+    }
+
+    private void adicionarProduto() {
+
+        User usuario = UserSession.getLoggedUser();
+        Optional<Product> opcional = AddProduto.abrir(stage);
+
+        if (opcional.isEmpty()) {
+            return;
+        }
+
+        Product produto = opcional.get();
+
+        Result<Product> resultado = productDAO.createProduct(
+                produto.getIdCategory(), usuario.getId(),
+                produto.getBookAuthor(), produto.getNameProduct(),
+                produto.getDescription(), produto.getPrice(),
+                produto.getStock(), produto.getStatus()
+        );
+
+        if (resultado != null && resultado.isSuccess()) {
+            mostrarSucesso("Produto cadastrado com sucesso!");
+            carregarProdutos();
+        }
+        else {
+            mostrarErro(resultado != null ? resultado.getMessage() : "Não foi possível cadastrar o produto.");
+        }
+    }
+
+    private void editarProduto(Product produto){
+        Optional<Product> opcional = AddProduto.abrir(stage, produto);
+
+        if (opcional.isEmpty()) {
+            return;
+        }
+        Product atualizado = opcional.get();
+        Result<Product> resultado = productDAO.updateProduct(
+                atualizado.getId(), atualizado.getIdCategory(),
+                atualizado.getCreatedBy(), atualizado.getBookAuthor(),
+                atualizado.getNameProduct(), atualizado.getDescription(),
+                atualizado.getPrice(), atualizado.getStock(), atualizado.getStatus()
+        );
+
+        if (resultado != null && resultado.isSuccess()){
+            mostrarSucesso("Produto atualizado com sucesso!");
+            carregarProdutos();
+        }
+        else{
+            mostrarErro(resultado != null ? resultado.getMessage() : "Não foi possível atualizar o produto.");
+        }
+    }
+
+    private void excluirProduto(Product produto){
+
+        Alert confirmacao = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacao.setTitle("Excluir produto");
+        confirmacao.setHeaderText("Deseja realmente excluir este produto?");
+        confirmacao.setContentText(produto.getNameProduct());
+
+        Optional<ButtonType> resposta = confirmacao.showAndWait();
+        if (resposta.isEmpty() || resposta.get() != ButtonType.OK){
+            return;
+        }
+
+        Result<Void> resultado = productDAO.deleteProduct(produto.getId());
+
+        if (resultado != null && resultado.isSuccess()){
+            mostrarSucesso("Produto excluído com sucesso!");
+            carregarProdutos();
+        }
+        else{
+            mostrarErro(resultado != null ? resultado.getMessage() : "Não foi possível excluir o produto.");
+        }
+    }
+
+    private void mostrarErro(String mensagem) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Erro");
+        alert.setHeaderText(null);
+        alert.setContentText(mensagem);
+        alert.showAndWait();
+    }
+
+    private void mostrarSucesso(String mensagem) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Sucesso");
+        alert.setHeaderText(null);
+        alert.setContentText(mensagem);
+        alert.showAndWait();
     }
 }
