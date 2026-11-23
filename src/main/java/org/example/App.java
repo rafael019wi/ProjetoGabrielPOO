@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 import org.example.views.Login;
 import org.example.views.MenuLateral;
 import org.example.views.VisaoGeral;
+import org.example.views.Categoria;
 import org.example.views.Produto;
 import org.example.views.Usuario;
 
@@ -49,7 +50,7 @@ public class App extends Application {
                 root.setCenter(new VisaoGeral().getView());
                 break;
             case "categorias":
-                // root.setCenter(new Categoria().getView());
+                root.setCenter(new Categoria().getView(stage));
                 break;
             case "produtos":
                 root.setCenter(new Produto(stage).getView());
