@@ -2,51 +2,66 @@ package org.example;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
-/**
- * JavaFX App
- */
+import org.example.views.Login;
+import org.example.views.MenuLateral;
+import org.example.views.VisaoGeral;
+import org.example.views.Categoria;
+import org.example.views.Produto;
+import org.example.views.Usuario;
+
 public class App extends Application {
+
+    private BorderPane root;
+    private Stage stage;
 
     @Override
     public void start(Stage stage) {
-        var javaVersion = SystemInfo.javaVersion();
-        var javafxVersion = SystemInfo.javafxVersion();
+        this.stage = stage;
 
-        var label = new Label("Hello, JavaFX " + javafxVersion + ", running on Java " + javaVersion + ".");
-        var scene = new Scene(new StackPane(label), 640, 480);
-        stage.setScene(scene);
+        Login login = new Login();
+        Scene cenaLogin = new Scene(login.criarTela(stage), 400, 400);
+
+        stage.setTitle("StockMaster Fx - Login");
+        stage.setScene(cenaLogin);
+        stage.centerOnScreen();
         stage.show();
     }
 
+    public void iniciarPainel(Stage stage) {
+        this.stage = stage;
+        root = new BorderPane();
+        MenuLateral menu = new MenuLateral();
+        root.setLeft(menu.criarMenuLateral(stage, this::navegar));
+
+        navegar("visao");
+        Scene scene = new Scene(root, 1200, 700);
+        stage.setTitle("StockMaster Fx - Painel Administrativo");
+        stage.setScene(scene);
+        stage.centerOnScreen();
+        stage.show();
+    }
+
+    private void navegar(String pagina) {
+        switch (pagina) {
+            case "visao":
+                root.setCenter(new VisaoGeral().getView());
+                break;
+            case "categorias":
+                root.setCenter(new Categoria().getView(stage));
+                break;
+            case "produtos":
+                root.setCenter(new Produto(stage).getView());
+                break;
+            case "usuarios":
+                root.setCenter(new Usuario().getView(stage));
+                break;
+        }
+    }
+
     public static void main(String[] args) {
-        launch();
+        launch(args);
     }
 }
-
-
-/*
-//Exemplo de conexão com o banco de dados
-
-package org.example;
-
-import org.example.entity.User;
-import org.example.DAO.UserDAO;
-
-public class App {
-    public static void main(String[] args) {
-        User user = new User();
-        user.setName("Guilherme Negrijo");
-        user.setEmail("gui@gmail.com");
-        user.setPhone("16999999999");
-        user.setPassword("teste123");
-        user.setStatus("active");
-
-        new UserDAO().createUser(user);
-        System.out.println(user.getName());
-    }
-}
-*/
