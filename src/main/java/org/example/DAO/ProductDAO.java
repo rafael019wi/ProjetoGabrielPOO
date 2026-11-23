@@ -30,10 +30,7 @@ public class ProductDAO {
         """;
 
         Connection conn = Connect.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement(
-                insertQuery,
-                Statement.RETURN_GENERATED_KEYS
-        )) {
+        try (PreparedStatement ps = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
             LocalDateTime createdAt = LocalDateTime.now();
 
             ps.setInt(1, idCategory);
@@ -172,7 +169,7 @@ public class ProductDAO {
             ON p.fk_created_by = u.id_user
         ORDER BY id_products DESC
         """;
-         // mudei o p.created_by por p.fk_created_by pq é oq ta no banco ( Cotuca )
+
         Connection conn = Connect.getConnection();
         try (PreparedStatement ps = conn.prepareStatement(selectQuery)) {
             try (ResultSet result = ps.executeQuery()) {
