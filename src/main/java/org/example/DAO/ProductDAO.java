@@ -16,7 +16,7 @@ public class ProductDAO {
         }
 
         String insertQuery = """
-        INSER INTO `products` (
+        INSERT INTO `products` (
             fk_id_category,
             fk_created_by,
             book_author,
@@ -30,7 +30,10 @@ public class ProductDAO {
         """;
 
         Connection conn = Connect.getConnection();
-        try (PreparedStatement ps = conn.prepareStatement(insertQuery)) {
+        try (PreparedStatement ps = conn.prepareStatement(
+                insertQuery,
+                Statement.RETURN_GENERATED_KEYS
+        )) {
             LocalDateTime createdAt = LocalDateTime.now();
 
             ps.setInt(1, idCategory);
@@ -85,7 +88,7 @@ public class ProductDAO {
             price = ?,
             stock = ?,
             product_status = ?
-        WHERE id_product = ?
+        WHERE id_products = ?
         """;
 
         Connection conn = Connect.getConnection();
@@ -130,7 +133,7 @@ public class ProductDAO {
             return new Result<>(false, 400, "Todos os campos são obrigatórios.", null);
         }
 
-        String deleteQuery = "DELETE FROM `products` WHERE id_product = ?";
+        String deleteQuery = "DELETE FROM `products` WHERE id_products = ?";
 
         Connection conn = Connect.getConnection();
         try (PreparedStatement ps = conn.prepareStatement(deleteQuery)) {
@@ -166,10 +169,10 @@ public class ProductDAO {
             p.created_at
         FROM `products` AS p
         LEFT JOIN `user` u
-            ON p.created_by = u.id_user
+            ON p.fk_created_by = u.id_user
         ORDER BY id_products DESC
         """;
-
+         // mudei o p.created_by por p.fk_created_by pq é oq ta no banco ( Cotuca )
         Connection conn = Connect.getConnection();
         try (PreparedStatement ps = conn.prepareStatement(selectQuery)) {
             try (ResultSet result = ps.executeQuery()) {
