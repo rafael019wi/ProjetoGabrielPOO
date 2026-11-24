@@ -19,13 +19,12 @@ import java.util.List;
 
 public class Usuario {
 
-    // Método público que devolve o VBox pronto para ser encaixado na classe App
+    // Método público
     public VBox getView(Stage stage) {
         VBox conteudoCentral = new VBox(20);
         conteudoCentral.setPadding(new Insets(40));
         conteudoCentral.setAlignment(Pos.TOP_LEFT);
 
-        // Cabeçalho com título e botão
         HBox cabecalho = new HBox(20);
         cabecalho.setAlignment(Pos.CENTER_LEFT);
 
@@ -247,7 +246,7 @@ public class Usuario {
         HBox containerBotoes = new HBox(10, btnSalvar, btnCancelar);
         containerBotoes.setAlignment(Pos.CENTER_RIGHT);
 
-        // Conexão direta com o método updatePassword do seu UserDAO
+        //conexão com USERDAO
         btnSalvar.setOnAction(e -> {
             String senhaAtual = txtSenhaAtual.getText();
             String novaSenha = txtNovaSenha.getText();
@@ -261,7 +260,7 @@ public class Usuario {
                 alert.showAndWait();
                 janelaSenha.close();
             } else {
-                // Exibe exatamente o erro tratado no seu DAO (ex: "A senha atual está incorreta.")
+                // Exibe alerta de senha incorreta
                 Alert alert = new Alert(Alert.AlertType.ERROR, resultado.getMessage(), ButtonType.OK);
                 alert.showAndWait();
             }
